@@ -61,7 +61,7 @@ main_component_methods = []
 for comp in a.get_activities() + a.get_services() + a.get_receivers() + a.get_providers():
 	comp = comp.replace(".", "/");
 	comp = "L" + comp + ";"
-	if comp in string_class_map.keys():
+	if comp in string_class_map:
 		main_component_methods.extend(string_class_map[comp].get_methods())
 	else:
 		print(comp, " was not found in class map.")
@@ -107,7 +107,7 @@ methods_framework_invoked = []
 if not consider_layout:
 	for method in main_component_methods:
 		name = method.get_class_name() + "->" + method.get_name() + method.get_descriptor()
-		if (not name in isinvoked.keys()) and (not "private" in method.get_access_flags_string()):
+		if (not name in isinvoked) and (not "private" in method.get_access_flags_string()):
 			methods_framework_invoked.append(method)
 else:
 	for method in main_component_methods:
@@ -161,7 +161,7 @@ def build_graph(queue, graph, mark):
 		name = queue[0]
 		graph.append(name.split("(")[0])
 		queue.popleft()
-		if not name in invokes.keys():
+		if not name in invokes:
 			continue
 		for method in invokes[name]:
 			if not method in mark:
@@ -175,14 +175,14 @@ entry_points = methods_framework_invoked
 
 for cl in d.get_classes():
 	ok = False
-	if cl.get_superclassname() in framework_api.keys():
+	if cl.get_superclassname() in framework_api:
 		ok = True;
 	interfaces = []
 	if cl.get_interfaces() != None:
 		interface_string = cl.get_interfaces()[1:-1]
 		interfaces = interface_string.split(" ")
 		for interface in interfaces:
-			if interface in framework_api.keys():
+			if interface in framework_api:
 				ok = True
 	if not ok:
 		continue
@@ -197,7 +197,7 @@ for cl in d.get_classes():
 			continue
 		#If we reached here method is overloading one of the framework methods
 		name = method.get_class_name() + "->" + method.get_name() + method.get_descriptor()
-		if not name in mark and not name in isinvoked.keys() and cl.get_name() + "->" + "<init>" in graph:
+		if not name in mark and not name in isinvoked and cl.get_name() + "->" + "<init>" in graph:
 				queue.append(name);
 				mark[name] = True
 				build_graph(queue, graph, mark)
