@@ -26,11 +26,11 @@ else:
 	print "\t draw option stores function call graph plots by entry points in the directory named as apk package name"
 	sys.exit()
 
-#a = APK(TEST)
-#d = dvm.DalvikVMFormat( a.get_dex() )
+a = APK(TEST)
+d = dvm.DalvikVMFormat( a.get_dex() )
 #x = VMAnalysis(d)
 
-a, d, x = anz.AnalyzeAPK(TEST,decompiler='dex2jar')
+#a, d, x = anz.AnalyzeAPK(TEST,decompiler='dex2jar')
 
 #Auxiliary structures. Perhaps I did not found the corresponding interfaces in the Androguard tool.
 string_method_map = {}
@@ -74,32 +74,29 @@ invokes = {}
 isinvoked = {}
 calls = []
 for method in d.get_methods():
-	g = x.get_method(method)
-
 	if method.get_code() == None:
 		continue
 
 	idx = 0
 	cur_method = method.get_class_name() + "->" + method.get_name() + method.get_descriptor()
 	invokes[cur_method] = []
-	for i in g.get_basic_blocks().get():
-		for ins in i.get_instructions():
-			if "invoke" in ins.get_name():
-				call_method = ""
-				matchObj = re.match( r'.*, ([^,]*)', ins.get_output(), re.M|re.I)
-				if (matchObj):
-					call_method = matchObj.group(1)
-					if call_method[:1] == '[':
-						call_method = call_method[1:]
-				if call_method != "" and (not call_method in invokes[cur_method]):
-					invokes[cur_method].append(call_method)
-					if call_method in isinvoked and not cur_method in isinvoked[call_method]:
-						isinvoked[call_method].append(cur_method)
-					if not call_method in isinvoked:
-						isinvoked[call_method] = [cur_method]
-				if ( call_method != "" and ( not (call_method in calls) )):
-					calls.append(call_method)
-			idx += ins.get_length()
+	for ins in method.get_instructions():
+		if "invoke" in ins.get_name():
+			call_method = ""
+			matchObj = re.match( r'.*, ([^,]*)', ins.get_output(), re.M|re.I)
+			if (matchObj):
+				call_method = matchObj.group(1)
+				if call_method[:1] == '[':
+					call_method = call_method[1:]
+			if call_method != "" and (not call_method in invokes[cur_method]):
+				invokes[cur_method].append(call_method)
+				if call_method in isinvoked and not cur_method in isinvoked[call_method]:
+					isinvoked[call_method].append(cur_method)
+				if not call_method in isinvoked:
+					isinvoked[call_method] = [cur_method]
+			if ( call_method != "" and ( not (call_method in calls) )):
+				calls.append(call_method)
+		idx += ins.get_length()
 
 methods_framework_invoked = []
 
