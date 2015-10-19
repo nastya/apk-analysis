@@ -29,26 +29,26 @@ for line in f:
 	
 	#getting permissions
 	try:
-            a = APK(package_name)
-            perms = a.get_permissions()
-            perms_set = set(perms)
-        except:
-            print 'Failed to get manifest'
-            continue
-	
+		a = APK(package_name)
+		perms = a.get_permissions()
+		perms_set = set(perms)
+	except:
+		print 'Failed to get manifest'
+		continue
+
 	#building feature vector
 	perms_fv = {}
 	for perm in system_perms.permissions:
-            perms_fv[perm] = 0
+		perms_fv[perm] = 0
 	for perm in perms_set:
-            if perm in perms_fv:
-                perms_fv[perm] = 1
+		if perm in perms_fv:
+			perms_fv[perm] = 1
                 
-        #saving
-        apk_hash = hashlib.sha256(open(package_name, 'r').read()).hexdigest()
-        out_f = open(fv_directory + '/' + apk_hash, 'w')
-        out_f.write(json.dumps(perms_fv, sort_keys=True, indent=4, separators=(',', ': ')))
-        out_f.close()
+	#saving
+	apk_hash = hashlib.sha256(open(package_name, 'r').read()).hexdigest()
+	out_f = open(fv_directory + '/' + apk_hash, 'w')
+	out_f.write(json.dumps(perms_fv, sort_keys=True, indent=4, separators=(',', ': ')))
+	out_f.close()
         
         
 f.close()
