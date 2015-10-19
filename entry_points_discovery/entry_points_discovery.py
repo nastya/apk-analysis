@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding=utf-8
 import sys
-sys.path.append('../androguard')
+sys.path.append('../../androguard')
 
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
@@ -16,7 +16,7 @@ import os
 
 import entry_points_discovery_module
 
-api_json = "api.json"
+api_json = "../api.json"
 
 if (len(sys.argv) > 1):
 	TEST = sys.argv[1]

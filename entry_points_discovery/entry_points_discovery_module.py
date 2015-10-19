@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding=utf-8
 import sys
-sys.path.append('../androguard')
+sys.path.append('../../androguard')
 
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
