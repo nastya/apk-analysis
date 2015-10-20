@@ -100,3 +100,8 @@ permissions = ['android.permission.INTERNET',
 'android.permission.AUTHENTICATE_ACCOUNTS',
 'android.permission.SET_ACTIVITY_WATCHER',
 'android.permission.SET_ALWAYS_FINISH']
+
+perms_weight = {}
+for perm in permissions:
+	perms_weight[perm] = 2
+perms_weight['android.permission.SEND_SMS'] = 20
