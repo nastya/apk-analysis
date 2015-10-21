@@ -1,14 +1,16 @@
 #!/usr/bin/python
+import sys
 import permission_matching
 import api_matching
+
+sys.path.append('../api_chains')
 import api_chains
-import sys
+
 sys.path.append('../')
 import interesting_api
 
-import os, fnmatch
-
 samples_dir = "../../drebin_samples"
+import os, fnmatch
 def find(pattern, path):
     result = []
     for root, dirs, files in os.walk(path):

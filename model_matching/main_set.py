@@ -1,6 +1,8 @@
 #!/usr/bin/python
+import sys
 import permission_matching
 import api_matching
+sys.path.append('../api_chains')
 import api_chains
 import json
 
