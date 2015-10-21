@@ -1,9 +1,16 @@
 #!/usr/bin/python
 import sys
+sys.path.append('../../androguard')
+from androguard.core.bytecode import *
+from androguard.core.bytecodes.apk import *
+from androguard.core.analysis.analysis import *
+import androlyze as anz
+
 import permission_matching
 import api_matching
-sys.path.append('../api_chains')
-import api_chains
+import api_chain_matching
+api_chain_matching.work_until_first_match = True
+
 import json
 
 analyzed_apps = 'malware_for_analysis.txt'
@@ -22,20 +29,26 @@ for line in f:
 	package_name = line[:-1]
 	count_apps += 1
 	print 'Processing', package_name, '(', count_apps, ' / ', total_apps_m, ')'
+	try:
+		andr_a = APK(package_name)
+		andr_d = dvm.DalvikVMFormat( andr_a.get_dex() )
+	except:
+		print 'Failed to decompile app'
+		continue
 	
-	perms = permission_matching.get_perm_vector(package_name)
+	perms = permission_matching.get_perm_vector(andr_a)
 	similar_list = permission_matching.get_similar(perms)
 	if len(similar_list) != 0:
 		malicious_perms_m += 1
 	similarities_found_by_perms_m[package_name] = similar_list
 
-	api = api_matching.get_used_api(package_name)
+	api = api_matching.get_used_api(andr_d)
 	similar_api_list = api_matching.get_similar_api(api, similar_list)
 	if len(similar_api_list) != 0:
 		malicious_m += 1
 	similarities_found_m[package_name] = similar_api_list
 
-	similar_api_chains_list = api_chains.get_similar(package_name, similar_api_list)
+	similar_api_chains_list = api_chain_matching.get_similar(andr_a, andr_d, similar_api_list)
 	if len(similar_api_chains_list) != 0:
 		malicious_chains_m += 1
 		print 'malicious', similar_api_chains_list
@@ -61,20 +74,26 @@ for line in f:
 	package_name = line[:-1]
 	count_apps += 1
 	print 'Processing', package_name, '(', count_apps, ' / ', total_apps_b, ')'
+	try:
+		andr_a = APK(package_name)
+		andr_d = dvm.DalvikVMFormat( andr_a.get_dex() )
+	except:
+		print 'Failed to decompile app'
+		continue
 
-	perms = permission_matching.get_perm_vector(package_name)
+	perms = permission_matching.get_perm_vector(andr_a)
 	similar_list = permission_matching.get_similar(perms)
 	if len(similar_list) != 0:
 		malicious_perms_b += 1
 	similarities_found_by_perms_b[package_name] = similar_list
 
-	api = api_matching.get_used_api(package_name)
+	api = api_matching.get_used_api(andr_d)
 	similar_api_list = api_matching.get_similar_api(api, similar_list)
 	if len(similar_api_list) != 0:
 		malicious_b += 1
 	similarities_found_b[package_name] = similar_api_list
 
-	similar_api_chains_list = api_chains.get_similar(package_name, similar_api_list)
+	similar_api_chains_list = api_chain_matching.get_similar(andr_a, andr_d, similar_api_list)
 	if len(similar_api_chains_list) != 0:
 		malicious_chains_b += 1
 		print 'malicious', similar_api_list

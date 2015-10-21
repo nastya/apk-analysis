@@ -18,19 +18,10 @@ f = open(api_json, 'r')
 framework_api = json.loads(f.read())
 f.close()
 
-def get_all_used_api(apk_name):
-	try:
-		#Androguard structures
-		a = APK(apk_name)
-		d = dvm.DalvikVMFormat( a.get_dex() )
-		#x = VMAnalysis(d)
-	except:
-		print ('Failed to build Androguard structures')
-		return None
-
+def get_all_used_api(andr_d):
 	try:
 		used_api = []
-		method_list = d.get_methods()
+		method_list = andr_d.get_methods()
 		for method in method_list:
 			if method.get_code() == None:
 				continue

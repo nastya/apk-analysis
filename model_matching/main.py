@@ -1,8 +1,15 @@
 #!/usr/bin/python
 import sys
+sys.path.append('../../androguard')
+from androguard.core.bytecode import *
+from androguard.core.bytecodes.apk import *
+from androguard.core.analysis.analysis import *
+import androlyze as anz
+
 import permission_matching
 import api_matching
 
+import api_chain_matching
 sys.path.append('../api_chains')
 import api_chains
 
@@ -26,7 +33,14 @@ else:
 	print sys.argv[0], 'apkfile'
 	sys.exit()
 
-perms = permission_matching.get_perm_vector(package_name)
+try:
+	andr_a = APK(package_name)
+	andr_d = dvm.DalvikVMFormat( andr_a.get_dex() )
+except:
+	print 'Failed to decompile app'
+	sys.exit()
+
+perms = permission_matching.get_perm_vector(andr_a)
 similar_list = permission_matching.get_similar(perms)
 if similar_list != []:
 	print 'Similar malware by permissions:'
@@ -34,7 +48,7 @@ if similar_list != []:
 		print x
 	print '___________________________________________________________________'
 
-api = api_matching.get_used_api(package_name)
+api = api_matching.get_used_api(andr_d)
 similar_api_list = api_matching.get_similar_api(api, similar_list)
 
 if len(similar_api_list) != 0:
@@ -45,30 +59,29 @@ if len(similar_api_list) != 0:
 else:
 	print 'No API-similarities with malware models'
 
-api_chains_app = api_chains.get_api_chains(package_name)
+api_chains_app = api_chains.get_api_chains(andr_a, andr_d)
 if (api_chains_app == None):
 	print 'Failed to obtain chains of app', package_name
 	sys.exit(0)
 
-for sample in similar_api_list:
-	found_fls = find(sample, samples_dir)
-	sample_full_path = found_fls[0] if len(found_fls) > 0 else None
-	if sample_full_path == None:
-		print 'Not found: ', sample
-	api_chains_sample = api_chains.get_api_chains(sample_full_path)
-	if (api_chains_sample == None):
-		print 'Failed to decompile sample', sample_full_path
+for sample in similar_api_list:	
+	if (not sample in api_chain_matching.api_chain_model.malw_api_chain_models):
 		continue
-	mal_a = sum((1 if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample)
-	mal_b = sum((len(x.chain) if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample)
+	api_chains_sample_dict = api_chain_matching.api_chain_model.malw_api_chain_models[sample]
+	api_chains_sample_list = []
+	for api_chain in api_chains_sample_dict:
+		api_chains_sample_list.append(api_chain_matching.api_chains.ApiChain(api_chain, api_chains_sample_dict[api_chain]))
+	
+	mal_a = sum((1 if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)
+	mal_b = sum((len(x.chain) if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)
 	common_chains = []
-	a,b,c,d = api_chains.compare_api_chains(api_chains_app, api_chains_sample, common_chains)
+	a,b,c,d = api_chains.compare_api_chains(api_chains_app, api_chains_sample_list, common_chains)
 
 	if (a >= api_chains.threshold_total_common_chains and b >= api_chains.threshold_total_common_length) or \
 		(c >= 2) or (c >= 1 and d >= 1) or \
 		(d >= 2 and b >= api_chains.threshold_total_common_length) or \
 		(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= api_chains.threshold_identical_num_chains and b * 1.0 / mal_b >= api_chains.threshold_identical_len_chains):
-		print 'Common API chains with', sample_full_path
+		print 'Common API chains with', sample
 		for i in range(0, len(common_chains)):
 			for j in range(0, len(common_chains[i].chain)):
 				if common_chains[i].chain[j] in interesting_api.interesting_api:

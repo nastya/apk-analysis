@@ -15,16 +15,6 @@ from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
 import androlyze as anz
 
-import os, fnmatch
-samples_dir = "../../drebin_samples"
-def find(pattern, path):
-    result = []
-    for root, dirs, files in os.walk(path):
-        for name in files:
-            if fnmatch.fnmatch(name, pattern):
-                result.append(os.path.join(root, name))
-    return result
-
 class ApiChain:
 	def __init__(self, root = '', chain = [], root2 = ''):
 		self.chain = chain
@@ -122,16 +112,10 @@ def dfs(root, invokes, mark, api_chain, consider_libs = False):
 			continue
 		dfs(invoke, invokes, mark, api_chain)
 
-def get_api_chains(app):
-	try:
-		a = APK(app)
-		d = dvm.DalvikVMFormat( a.get_dex() )
-	except:
-		return None
-
+def get_api_chains(andr_a, andr_d):
 	entry_points1 = []
 	invokes1 = {}
-	entry_points_discovery_module.find_entry_points(a, d, framework_api, entry_points1, invokes1)
+	entry_points_discovery_module.find_entry_points(andr_a, andr_d, framework_api, entry_points1, invokes1)
 	mark1 = {}
 	mark_before = {}
 	api_chains1 = []
@@ -193,30 +177,3 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 			if mark_chains[i]:
 				break
 	return total_common_chains, total_common_length, common_long_subsequences, common_dangerous_subsequences
-
-def get_similar(app, app_list):
-	api_chains_app = get_api_chains(app)
-	if (api_chains_app == None):
-		return []
-	similar_apps = []
-
-	for sample in app_list:
-		found_fls = find(sample, samples_dir)
-		sample_full_path = found_fls[0] if len(found_fls) > 0 else None
-		if sample_full_path == None:
-			continue
-		api_chains_sample = get_api_chains(sample_full_path)
-		if (api_chains_sample == None):
-			continue
-		mal_a = sum((1 if len(x.chain) >= minimum_length else 0) for x in api_chains_sample)
-		mal_b = sum((len(x.chain) if len(x.chain) >= minimum_length else 0) for x in api_chains_sample)
-		common_chains = []
-		a,b,c,d = compare_api_chains(api_chains_app, api_chains_sample, common_chains)
-
-		if (a >= threshold_total_common_chains and b >= threshold_total_common_length) or \
-			(c >= 2) or (c >= 1 and d >= 1) or \
-			(d >= 2 and b >= threshold_total_common_length) or \
-			(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= threshold_identical_num_chains and b * 1.0 / mal_b >= threshold_identical_len_chains):
-			similar_apps.append(sample)
-	return similar_apps
-
