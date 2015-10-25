@@ -26,7 +26,7 @@ def get_similar(andr_a, andr_d, app_list):
 
 		if (a >= api_chains.threshold_total_common_chains and b >= api_chains.threshold_total_common_length) or \
 			(c >= 2) or (c >= 1 and d >= 1) or \
-			(d >= 2 and b >= api_chains.threshold_total_common_length) or \
+			(d >= 1 and b >= api_chains.threshold_total_common_length) or \
 			(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= api_chains.threshold_identical_num_chains and b * 1.0 / mal_b >= api_chains.threshold_identical_len_chains):
 			similar_apps.append(sample)
 			if work_until_first_match:

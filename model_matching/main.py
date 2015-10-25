@@ -64,6 +64,8 @@ if (api_chains_app == None):
 	print 'Failed to obtain chains of app', package_name
 	sys.exit(0)
 
+is_malicious = False
+
 for sample in similar_api_list:	
 	if (not sample in api_chain_matching.api_chain_model.malw_api_chain_models):
 		continue
@@ -79,9 +81,10 @@ for sample in similar_api_list:
 
 	if (a >= api_chains.threshold_total_common_chains and b >= api_chains.threshold_total_common_length) or \
 		(c >= 2) or (c >= 1 and d >= 1) or \
-		(d >= 2 and b >= api_chains.threshold_total_common_length) or \
+		(d >= 1 and b >= api_chains.threshold_total_common_length) or \
 		(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= api_chains.threshold_identical_num_chains and b * 1.0 / mal_b >= api_chains.threshold_identical_len_chains):
 		print 'Common API chains with', sample
+		is_malicious = True
 		for i in range(0, len(common_chains)):
 			for j in range(0, len(common_chains[i].chain)):
 				if common_chains[i].chain[j] in interesting_api.interesting_api:
@@ -94,5 +97,6 @@ for sample in similar_api_list:
 				print common_chains[i].chain[j]
 			print '-------------------------------------------------------------------'
 		print '___________________________________________________________________'
-		
 
+if is_malicious:
+	print 'Identified as malware'
