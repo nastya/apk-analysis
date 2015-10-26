@@ -145,6 +145,9 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 
 	for api_chain11 in api_chains1:
 		api_chain1 = api_chain11.chain
+		longest_match_ind = 0
+		longest_match_length = -1
+		common_chain_added = False
 		for i in range(len(api_chains2)):
 			if mark_chains[i]:
 				continue
@@ -152,28 +155,38 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 			api_chain2 = api_chains2[i].chain
 			lcs = []
 			lcs_length = longestCommonSubsequence(api_chain1, api_chain2, lcs)
-			common_chain_added = False
+
 			if (lcs_length >= minimum_length and len(api_chain2) > 0 and \
 				lcs_length * 1.0 / len(api_chain2) >= threshold_common_length):
+				if lcs_length > longest_match_length:
+					longest_match_ind = i
+					longest_match_length = lcs_length
+			if isSuspiciousChain(lcs) and lcs_length >= threshold_suspicious_length:
 				total_common_chains += 1
 				total_common_length += lcs_length
-				if common_chains != None:
-					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root))
-					common_chain_added = True
-				mark_chains[i] = True
-			if isSuspiciousChain(lcs) and lcs_length >= threshold_suspicious_length:
 				common_dangerous_subsequences += 1
-				if common_chains != None and not common_chain_added:
+				if common_chains != None:
 					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root))
 					common_chain_added = True
 				mark_chains[i] = True
 				break
 			if lcs_length >= threshold_length and lcs_length >= 0.5 * len(api_chain2):
+				total_common_chains += 1
+				total_common_length += lcs_length
 				common_long_subsequences += 1
-				if common_chains != None and not common_chain_added:
+				if common_chains != None:
 					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root))
 					common_chain_added = True
 				mark_chains[i] = True
 			if mark_chains[i]:
 				break
+		if not common_chain_added and longest_match_length != -1:
+			total_common_chains += 1
+			total_common_length += longest_match_length
+			mark_chains[longest_match_ind] = True
+			api_chain22 = api_chains2[longest_match_ind]
+			api_chain2 = api_chain22.chain
+			longestCommonSubsequence(api_chain1, api_chain2, lcs)
+			common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root))
+
 	return total_common_chains, total_common_length, common_long_subsequences, common_dangerous_subsequences
