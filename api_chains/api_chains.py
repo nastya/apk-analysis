@@ -23,9 +23,9 @@ class ApiChain:
 
 threshold_common_length = 0.85 #percentage
 threshold_suspicious_length = 6
-threshold_length = 20 #methods in API chain
+threshold_length = 30 #methods in API chain
 threshold_total_common_chains = 7
-threshold_total_common_length = 30
+threshold_total_common_length = 50
 threshold_identical_num_chains = 0.95
 threshold_identical_len_chains = 0.95
 minimum_length = 3
@@ -170,7 +170,7 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 					common_chain_added = True
 				mark_chains[i] = True
 				break
-			if lcs_length >= threshold_length and lcs_length >= 0.5 * len(api_chain2):
+			if lcs_length >= threshold_length and lcs_length >= 0.6 * len(api_chain2):
 				total_common_chains += 1
 				total_common_length += lcs_length
 				common_long_subsequences += 1
