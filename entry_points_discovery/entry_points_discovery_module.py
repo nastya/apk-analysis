@@ -46,7 +46,8 @@ def find_entry_points(a, d, framework_api, entry_points, invokes):
 		if comp in string_class_map:
 			main_component_methods.extend(string_class_map[comp].get_methods())
 		else:
-			print(comp, " was not found in class map.")
+			pass
+			#print(comp, " was not found in class map.")
 	
 	#print 'Main component methods:'
 	#for method in main_component_methods:
