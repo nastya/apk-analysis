@@ -28,7 +28,6 @@ def analyze_malicious(package_list, similarities_found, similarities_found_by_pe
 		try:
 			andr_a = APK(package_name)
 			andr_d = dvm.DalvikVMFormat( andr_a.get_dex() )
-			#print 'Failed to decompile app'
 
 			perms = permission_matching.get_perm_vector(andr_a)
 			similar_list = permission_matching.get_similar(perms)
@@ -41,6 +40,7 @@ def analyze_malicious(package_list, similarities_found, similarities_found_by_pe
 			similar_api_chains_list = api_chain_matching.get_similar(andr_a, andr_d, similar_api_list)
 			similarities_found_by_chains[package_name] = similar_api_chains_list
 		except:
+			print 'Failed to decompile app'
 			continue
 
 def process_list_apps(list_apps_f, similarities_found_by_perms_f, similarities_found_f, similarities_found_by_chains_f, tag):
