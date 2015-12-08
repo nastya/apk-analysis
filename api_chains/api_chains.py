@@ -186,6 +186,7 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 			mark_chains[longest_match_ind] = True
 			api_chain22 = api_chains2[longest_match_ind]
 			api_chain2 = api_chain22.chain
+			lcs = []
 			longestCommonSubsequence(api_chain1, api_chain2, lcs)
 			common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root))
 
