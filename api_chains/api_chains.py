@@ -16,10 +16,11 @@ from androguard.core.analysis.analysis import *
 import androlyze as anz
 
 class ApiChain:
-	def __init__(self, root = '', chain = [], root2 = ''):
+	def __init__(self, root = '', chain = [], root2 = '', components = 0):
 		self.chain = chain
 		self.root = root
 		self.root2 = root2
+		self.components = components
 
 threshold_common_length = 0.85 #percentage
 threshold_suspicious_length = 6
@@ -37,36 +38,49 @@ f = open(api_json, 'r')
 framework_api = json.loads(f.read())
 f.close()
 
-def longestCommonSubsequence(api_chain1, api_chain2, lcs = None):
+def longestCommonSubsequence(api_chain1, api_chain2, lcs = None, chain_components = None):
 	if (len(api_chain1) == 0 or len(api_chain2) == 0):
 		return 0
 	f = [[0 for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
+	prev = [[(0,0) for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
 	for i in range(0, len(api_chain1) + 1):
 		for j in range(0, len(api_chain2) + 1):
 			if (i == 0 or j == 0):
 				f[i][j] = 0
 			elif api_chain1[i - 1] == api_chain2[j - 1]:
 				f[i][j] = f[i-1][j-1] + 1
+				prev[i][j] = (i-1, j-1)
 			else:
-				f[i][j] = max(f[i-1][j], f[i][j-1])
+				if (f[i-1][j] > f[i][j-1]):
+					f[i][j] = f[i-1][j]
+					prev[i][j] = (i-1, j)
+				else:
+					f[i][j] = f[i][j-1]
+					prev[i][j] = (i, j-1)
+
 	if lcs == None:
 		return f[len(api_chain1) ][len(api_chain2)]
 
 	#getting the longestCommonSubsequence itself
 	i = len(api_chain1)
 	j = len(api_chain2)
+	components = 0
+	last_ind = -1
+
 	while i != 0 and j != 0:
-		if i != 0 and j != 0 and f[i][j] == f[i-1][j-1] + 1:
+		prev_i, prev_j = prev[i][j]
+		if f[prev_i][prev_j] == f[i][j] - 1:
 			lcs.insert(0, api_chain1[i - 1])
-			i = i - 1
-			j = j - 1
-		elif i != 0 and f[i][j] == f[i-1][j]:
-			i = i - 1
-		elif j != 0 and f[i][j] == f[i][j-1]:
-			j = j - 1
-		else:
-			print 'Oops, I was wrong', i, j
+			if last_ind != i:
+				components += 1
+			last_ind = i - 1
+		i = prev_i
+		j = prev_j
+
+	if chain_components != None and len(chain_components) > 0:
+		chain_components[0] = components
 	return len(lcs)
+
 
 def simplifyAPIChain(api_chain):
 	api_chain_simplified = []
@@ -154,19 +168,21 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 			api_chain22 = api_chains2[i]
 			api_chain2 = api_chains2[i].chain
 			lcs = []
-			lcs_length = longestCommonSubsequence(api_chain1, api_chain2, lcs)
+			chain_components_a = [0]
+			lcs_length = longestCommonSubsequence(api_chain1, api_chain2, lcs, chain_components_a)
+			chain_components = chain_components_a[0]
 
-			if (lcs_length >= minimum_length and len(api_chain2) > 0 and \
+			if (lcs_length >= minimum_length and (chain_components < lcs_length / 3 + 1) and len(api_chain2) > 0 and \
 				lcs_length * 1.0 / len(api_chain2) >= threshold_common_length):
 				if lcs_length > longest_match_length:
 					longest_match_ind = i
 					longest_match_length = lcs_length
-			if isSuspiciousChain(lcs) and lcs_length >= threshold_suspicious_length:
+			if isSuspiciousChain(lcs) and lcs_length >= threshold_suspicious_length and (chain_components < lcs_length / 3 + 1):
 				total_common_chains += 1
 				total_common_length += lcs_length
 				common_dangerous_subsequences += 1
 				if common_chains != None:
-					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root))
+					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root, chain_components))
 					common_chain_added = True
 				mark_chains[i] = True
 				break
@@ -175,7 +191,7 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 				total_common_length += lcs_length
 				common_long_subsequences += 1
 				if common_chains != None:
-					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root))
+					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root, chain_components))
 					common_chain_added = True
 				mark_chains[i] = True
 			if mark_chains[i]:
@@ -187,7 +203,9 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 			api_chain22 = api_chains2[longest_match_ind]
 			api_chain2 = api_chain22.chain
 			lcs = []
-			longestCommonSubsequence(api_chain1, api_chain2, lcs)
-			common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root))
+			chain_components_a = [0]
+			longestCommonSubsequence(api_chain1, api_chain2, lcs, chain_components_a)
+			chain_components = chain_components_a[0]
+			common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root, chain_components))
 
 	return total_common_chains, total_common_length, common_long_subsequences, common_dangerous_subsequences
