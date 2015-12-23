@@ -72,7 +72,7 @@ def process_list_apps(list_apps_f, similarities_found_by_perms_f, similarities_f
 
 	for line in f:
 		package_name = line[:-1]
-		if not package_name in counted_similarities_found:
+		if not package_name in counted_similarities_found_by_chains:
 			package_list.append(package_name)
 	print len(package_list), tag, 'samples to analyze'
 
