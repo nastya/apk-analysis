@@ -14,6 +14,7 @@ from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
 import androlyze as anz
+from sets import Set
 
 class ApiChain:
 	def __init__(self, root = '', chain = [], root2 = '', components = 0):
@@ -37,6 +38,79 @@ api_json = '../api.json'
 f = open(api_json, 'r')
 framework_api = json.loads(f.read())
 f.close()
+
+def isSuspiciousCall(api_call):
+	if api_call in interesting_api.interesting_api:
+		return True
+	else:
+		return False
+
+def lcs_min_comp_v2(api_chain1, api_chain2):
+	#returns lcs length, number of components and presence of suspicious calls
+	f = [[0 for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
+	info = [[Set() for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
+
+	for i in range(0, len(api_chain1) + 1):
+		for j in range(0, len(api_chain2) + 1):
+			if (i == 0 or j == 0):
+				f[i][j] = 0
+			else:
+				if api_chain1[i - 1] == api_chain2[j - 1]:
+					f[i][j] = f[i-1][j-1] + 1
+					if len(info[i-1][j-1]) == 0:
+						info[i][j].add((i-1, isSuspiciousCall(api_chain1[i - 1]), 1))
+					else:
+						comp_cur = -1
+						susp_cur = False
+						for lp, suspp, compp in info[i-1][j-1]:
+							compt = compp if lp == i-2 else compp + 1
+							if comp_cur == -1 or compt < comp_cur:
+								comp_cur = compt
+								susp_cur = suspp
+							if compt == comp_cur and suspp:
+								susp_cur = suspp
+						susp_cur = susp_cur or isSuspiciousCall(api_chain1[i - 1])
+						info[i][j].add((i-1, susp_cur, comp_cur))
+				else:
+					f[i][j] = max(f[i-1][j], f[i][j-1])
+					if (f[i-1][j] >= f[i][j-1]):
+						info[i][j] = info[i][j].union(info[i-1][j])
+					if (f[i-1][j] <= f[i][j-1]):
+						info[i][j] = info[i][j].union(info[i][j-1])
+					bestl = -1
+					bestsusp = False
+					bestcomp = -1
+					rightmostl = -1
+					rightmostsusp = False
+					rightmostcomp = -1
+					for lp, suspp, compp in info[i][j]:
+						if lp == i-1:
+							rightmostl = lp
+							rightmostsusp = suspp
+							rightmostcomp = compp
+							continue
+						if bestcomp == -1 or compp < bestcomp:
+							bestcomp = compp
+							bestsusp = suspp
+							bestl = lp
+						if compp == bestcomp and suspp:
+							bestsusp = suspp
+							bestl = lp
+					info[i][j] = Set()
+					if rightmostl != -1 and (rightmostcomp < bestcomp + 2 or bestcomp == -1):
+						info[i][j].add((rightmostl, rightmostsusp, rightmostcomp))
+					if bestl != -1 and (bestcomp < rightmostcomp or rightmostcomp == -1):
+						info[i][j].add((bestl, bestsusp, bestcomp))
+
+	bestcomp = -1
+	bestsusp = False
+	for lp, suspp, compp in info[len(api_chain1)][len(api_chain2)]:
+		if bestcomp == -1 or compp < bestcomp:
+			bestcomp = compp
+			bestsusp = suspp
+		if compp == bestcomp and suspp:
+			bestsusp = suspp
+	return (f[len(api_chain1)][len(api_chain2)], bestcomp, bestsusp)
 
 def longestCommonSubsequence(api_chain1, api_chain2, lcs = None, chain_components = None):
 	if (len(api_chain1) == 0 or len(api_chain2) == 0):
@@ -161,51 +235,46 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 		api_chain1 = api_chain11.chain
 		longest_match_ind = 0
 		longest_match_length = -1
-		common_chain_added = False
 		for i in range(len(api_chains2)):
 			if mark_chains[i]:
 				continue
 			api_chain22 = api_chains2[i]
 			api_chain2 = api_chains2[i].chain
-			lcs = []
-			chain_components_a = [0]
-			lcs_length = longestCommonSubsequence(api_chain1, api_chain2, lcs, chain_components_a)
-			chain_components = chain_components_a[0]
+			lcs_length = longestCommonSubsequence(api_chain1, api_chain2)
 
-			if (lcs_length >= minimum_length and (chain_components < lcs_length / 3 + 1) and len(api_chain2) > 0 and \
+			if (lcs_length >= minimum_length and len(api_chain2) > 0 and \
 				lcs_length * 1.0 / len(api_chain2) >= threshold_common_length):
 				if lcs_length > longest_match_length:
 					longest_match_ind = i
 					longest_match_length = lcs_length
-			if isSuspiciousChain(lcs) and lcs_length >= threshold_suspicious_length and (chain_components < lcs_length / 3 + 1):
-				total_common_chains += 1
-				total_common_length += lcs_length
-				common_dangerous_subsequences += 1
-				if common_chains != None:
-					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root, chain_components))
-					common_chain_added = True
-				mark_chains[i] = True
-				break
-			if lcs_length >= threshold_length and lcs_length >= 0.6 * len(api_chain2):
-				total_common_chains += 1
-				total_common_length += lcs_length
-				common_long_subsequences += 1
-				if common_chains != None:
-					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root, chain_components))
-					common_chain_added = True
-				mark_chains[i] = True
-			if mark_chains[i]:
-				break
-		if not common_chain_added and longest_match_length != -1:
-			total_common_chains += 1
-			total_common_length += longest_match_length
-			mark_chains[longest_match_ind] = True
+
+		if longest_match_length != -1:
 			api_chain22 = api_chains2[longest_match_ind]
 			api_chain2 = api_chain22.chain
 			lcs = []
 			chain_components_a = [0]
-			longestCommonSubsequence(api_chain1, api_chain2, lcs, chain_components_a)
-			chain_components = chain_components_a[0]
-			common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root, chain_components))
+			chain_components = 0
+			suspFlag = False
+			lcs_length = 0
+			if common_chains != None:
+				lcs_length = longestCommonSubsequence(api_chain1, api_chain2, lcs, chain_components_a)
+				chain_components = chain_components_a[0]
+				suspFlag = isSuspiciousChain(lcs)
+			else:
+				lcs_length, chain_components, suspFlag = lcs_min_comp_v2(api_chain1, api_chain2)
+			flag_long = False
+			flag_dangerous = False
+			if lcs_length >= threshold_length and lcs_length >= 0.6 * len(api_chain2):
+				common_long_subsequences += 1
+				flag_long = True
+			if suspFlag and lcs_length >= threshold_suspicious_length and (chain_components < lcs_length / 3 + 1):
+				common_dangerous_subsequences += 1
+				flag_dangerous = True
+			if (chain_components < lcs_length / 3 + 1 or flag_long or flag_dangerous):
+				total_common_chains += 1
+				total_common_length += longest_match_length
+				mark_chains[longest_match_ind] = True
+				if common_chains != None:
+					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root, chain_components))
 
 	return total_common_chains, total_common_length, common_long_subsequences, common_dangerous_subsequences
