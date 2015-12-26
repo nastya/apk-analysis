@@ -45,6 +45,105 @@ def isSuspiciousCall(api_call):
 	else:
 		return False
 
+def lcs_min_comp_get_chain(api_chain1, api_chain2, lcs):
+	#returns lcs length, number of components and presence of suspicious calls
+	f = [[0 for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
+	info = [[Set() for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
+
+	for i in range(0, len(api_chain1) + 1):
+		for j in range(0, len(api_chain2) + 1):
+			if (i == 0 or j == 0):
+				f[i][j] = 0
+			else:
+				if api_chain1[i - 1] == api_chain2[j - 1]:
+					f[i][j] = f[i-1][j-1] + 1
+					if len(info[i-1][j-1]) == 0:
+						info[i][j].add((i-1, isSuspiciousCall(api_chain1[i - 1]), 1, 0, 0, 0))
+					else:
+						comp_cur = -1
+						susp_cur = False
+						prev_l = -1
+						for lp, suspp, compp, previ, prevj, prevl in info[i-1][j-1]:
+							compt = compp if lp == i-2 else compp + 1
+							if comp_cur == -1 or compt < comp_cur:
+								comp_cur = compt
+								susp_cur = suspp
+								prev_l = lp
+							if compt == comp_cur and suspp:
+								susp_cur = suspp
+								prev_l = lp
+						susp_cur = susp_cur or isSuspiciousCall(api_chain1[i - 1])
+						info[i][j].add((i-1, susp_cur, comp_cur, i-1, j-1, prev_l))
+				else:
+					f[i][j] = max(f[i-1][j], f[i][j-1])
+					if (f[i-1][j] >= f[i][j-1]):
+						info[i][j] = info[i][j].union(info[i-1][j])
+					if (f[i-1][j] <= f[i][j-1]):
+						info[i][j] = info[i][j].union(info[i][j-1])
+					bestl = -1
+					bestsusp = False
+					bestcomp = -1
+					bestprevi = -1
+					bestprevj = -1
+					bestprevl = -1
+					rightmostl = -1
+					rightmostsusp = False
+					rightmostcomp = -1
+					rightmostprevi = -1
+					rightmostprevj = -1
+					rightmostprevl = -1
+					for lp, suspp, compp, previ, prevj, prevl in info[i][j]:
+						if lp == i-1:
+							rightmostl = lp
+							rightmostsusp = suspp
+							rightmostcomp = compp
+							rightmostprevi = previ
+							rightmostprevj = prevj
+							rightmostprevl = prevl
+							continue
+						if bestcomp == -1 or compp < bestcomp:
+							bestcomp = compp
+							bestsusp = suspp
+							bestl = lp
+							bestprevi = previ
+							bestprevj = prevj
+							bestprevl = prevl
+						if compp == bestcomp and suspp:
+							bestsusp = suspp
+							bestl = lp
+							bestprevi = previ
+							bestprevj = prevj
+							bestprevl = prevl
+					info[i][j] = Set()
+					if rightmostl != -1 and (rightmostcomp < bestcomp + 2 or bestcomp == -1):
+						info[i][j].add((rightmostl, rightmostsusp, rightmostcomp, rightmostprevi, rightmostprevj, rightmostprevl))
+					if bestl != -1 and (bestcomp < rightmostcomp or rightmostcomp == -1):
+						info[i][j].add((bestl, bestsusp, bestcomp, bestprevi, bestprevj, bestprevl))
+
+	bestcomp = -1
+	bestsusp = False
+	bestl = -1
+	for lp, suspp, compp, previ, prevj, prevl in info[len(api_chain1)][len(api_chain2)]:
+		if bestcomp == -1 or compp < bestcomp:
+			bestcomp = compp
+			bestsusp = suspp
+			bestl = lp
+		if compp == bestcomp and suspp:
+			bestsusp = suspp
+			bestl = lp
+	i = len(api_chain1)
+	j = len(api_chain2)
+	l = bestl
+	while (i != 0 and j != 0):
+		lcs.insert(0, api_chain1[l])
+		for lp, suspp, compp, previ, prevj, prevl in info[i][j]:
+			if lp == l:
+				i = previ
+				j = prevj
+				l = prevl
+				break
+	return (f[len(api_chain1)][len(api_chain2)], bestcomp, bestsusp)
+
 def lcs_min_comp_v2(api_chain1, api_chain2):
 	#returns lcs length, number of components and presence of suspicious calls
 	f = [[0 for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
@@ -112,9 +211,10 @@ def lcs_min_comp_v2(api_chain1, api_chain2):
 			bestsusp = suspp
 	return (f[len(api_chain1)][len(api_chain2)], bestcomp, bestsusp)
 
-def longestCommonSubsequence(api_chain1, api_chain2, lcs = None, chain_components = None):
+def longestCommonSubsequence(api_chain1, api_chain2):
 	if (len(api_chain1) == 0 or len(api_chain2) == 0):
 		return 0
+
 	f = [[0 for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
 	prev = [[(0,0) for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
 	for i in range(0, len(api_chain1) + 1):
@@ -132,28 +232,7 @@ def longestCommonSubsequence(api_chain1, api_chain2, lcs = None, chain_component
 					f[i][j] = f[i][j-1]
 					prev[i][j] = (i, j-1)
 
-	if lcs == None:
-		return f[len(api_chain1) ][len(api_chain2)]
-
-	#getting the longestCommonSubsequence itself
-	i = len(api_chain1)
-	j = len(api_chain2)
-	components = 0
-	last_ind = -1
-
-	while i != 0 and j != 0:
-		prev_i, prev_j = prev[i][j]
-		if f[prev_i][prev_j] == f[i][j] - 1:
-			lcs.insert(0, api_chain1[i - 1])
-			if last_ind != i:
-				components += 1
-			last_ind = i - 1
-		i = prev_i
-		j = prev_j
-
-	if chain_components != None and len(chain_components) > 0:
-		chain_components[0] = components
-	return len(lcs)
+	return f[len(api_chain1) ][len(api_chain2)]
 
 
 def simplifyAPIChain(api_chain):
@@ -257,9 +336,7 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 			suspFlag = False
 			lcs_length = 0
 			if common_chains != None:
-				lcs_length = longestCommonSubsequence(api_chain1, api_chain2, lcs, chain_components_a)
-				chain_components = chain_components_a[0]
-				suspFlag = isSuspiciousChain(lcs)
+				lcs_length, chain_components, suspFlag = lcs_min_comp_get_chain(api_chain1, api_chain2, lcs)
 			else:
 				lcs_length, chain_components, suspFlag = lcs_min_comp_v2(api_chain1, api_chain2)
 			flag_long = False
