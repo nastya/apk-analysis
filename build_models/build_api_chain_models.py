@@ -29,7 +29,11 @@ for line in f_list:
 	count_apps += 1
 	print 'Processing', apk_name, '(', count_apps, ' / ', total_apps, ')'
 	apk_hash = hashlib.sha256(open(apk_name, 'r').read()).hexdigest()
-	app_api_chains = api_chains.get_api_chains(apk_name)
+
+	a = APK(apk_name)
+	d = dvm.DalvikVMFormat( a.get_dex() )
+
+	app_api_chains = api_chains.get_api_chains(a, d)
 	if app_api_chains == None:
 		continue
 	features = {}
