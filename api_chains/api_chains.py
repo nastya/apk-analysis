@@ -259,6 +259,9 @@ def isSuspiciousChain(api_chain):
 			return True
 	return False
 
+def printApiChain(api_chain):
+	print api_chain.root, ":", api_chain.chain
+
 def dfs(root, invokes, mark, api_chain, consider_libs = False):
 	if (not consider_libs and isLibraryClass(root.split("->")[0])):
 		return
