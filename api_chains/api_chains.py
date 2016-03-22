@@ -313,6 +313,7 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 	total_common_chains = 0
 	total_common_length = 0
 
+	api_chains1 = sorted(api_chains1, key = lambda api_chain: len(api_chain.chain), reverse = True)
 	for api_chain11 in api_chains1:
 		api_chain1 = api_chain11.chain
 		longest_match_ind = 0
