@@ -8,7 +8,7 @@ from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
 from collections import deque
 
-import androlyze as anz
+#import androlyze as anz
 
 import pydot
 import json
@@ -80,5 +80,3 @@ if len(sys.argv) > 2 and sys.argv[2] == 'draw':
 		name = name.replace("/", ".") 
 		#graph.write_dot(directory + "/" + name + '.dot')
 		graph.write_svg(directory + "/" + name + '.svg')
-
-		

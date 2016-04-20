@@ -11,7 +11,6 @@ sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
-import androlyze as anz
 
 fv_directory = '../perms_fv'
 if not os.path.exists(fv_directory):

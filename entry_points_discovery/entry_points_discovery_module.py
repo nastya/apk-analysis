@@ -8,8 +8,6 @@ from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
 from collections import deque
 
-import androlyze as anz
-
 consider_layout = True
 
 #first three arguments are input, the last two are output
@@ -170,8 +168,9 @@ def find_entry_points(a, d, framework_api, entry_points, invokes):
 			ok = True;
 		interfaces = []
 		if cl.get_interfaces() != None:
-			interface_string = cl.get_interfaces()[1:-1]
-			interfaces = interface_string.split(" ")
+			#interface_string = cl.get_interfaces()[1:-1]
+			#interfaces = interface_string.split(" ")
+			interfaces = cl.get_interfaces()
 			for interface in interfaces:
 				if interface in framework_api:
 					ok = True

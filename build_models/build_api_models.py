@@ -11,7 +11,6 @@ sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
-import androlyze as anz
 
 save_directory = "../api_fv"
 if not os.path.exists(save_directory):

@@ -13,7 +13,6 @@ sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
-import androlyze as anz
 from sets import Set
 
 class ApiChain:
