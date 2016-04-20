@@ -29,8 +29,12 @@ for line in f_list:
 	print 'Processing', apk_name, '(', count_apps, ' / ', total_apps, ')'
 	apk_hash = hashlib.sha256(open(apk_name, 'r').read()).hexdigest()
 
-	a = APK(apk_name)
-	d = dvm.DalvikVMFormat( a.get_dex() )
+	try:
+		a = APK(apk_name)
+		d = dvm.DalvikVMFormat( a.get_dex() )
+	except:
+		print 'Failed to decompile'
+		continue
 
 	app_api_chains = api_chains.get_api_chains(a, d)
 	if app_api_chains == None:
