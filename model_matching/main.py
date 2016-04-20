@@ -64,6 +64,11 @@ if (api_chains_app == None):
 	print 'Failed to obtain chains of app', package_name
 	sys.exit(0)
 
+
+api_chains_app_dict = {}
+for api_chain in api_chains_app:
+	api_chains_app_dict[api_chain.root] = api_chain.chain
+
 is_malicious = False
 
 for sample in similar_api_list:	
@@ -78,6 +83,7 @@ for sample in similar_api_list:
 	mal_b = sum((len(x.chain) if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)
 	common_chains = []
 	a,b,c,d = api_chains.compare_api_chains(api_chains_app, api_chains_sample_list, common_chains)
+	print a, b, c, d, mal_a, mal_b, 'Sample: ', sample
 
 	if (a >= api_chains.threshold_total_common_chains and b >= api_chains.threshold_total_common_length) or \
 		(c >= 2) or (c >= 1 and d >= 1) or \
@@ -91,8 +97,12 @@ for sample in similar_api_list:
 					common_chains[i].chain[j] = '*******************************************' + common_chains[i].chain[j]
 
 		for i in range(0, len(common_chains)):
-			print 'Root1:', common_chains[i].root
-			print 'Root2:', common_chains[i].root2
+			print 'Root1:', common_chains[i].root, 'len:', len(api_chains_app_dict[common_chains[i].root])
+			print api_chains_app_dict[common_chains[i].root]
+			print 'Root2:', common_chains[i].root2, 'len:', len(api_chains_sample_dict[common_chains[i].root2])
+			print api_chains_sample_dict[common_chains[i].root2]
+			print 'Components: ', common_chains[i].components
+			print 'Common chain length: ', len(common_chains[i].chain)
 			for j in range(0, len(common_chains[i].chain)):
 				print common_chains[i].chain[j]
 			print '-------------------------------------------------------------------'
