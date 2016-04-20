@@ -164,8 +164,15 @@ def find_entry_points(a, d, framework_api, entry_points, invokes):
 
 	for cl in d.get_classes():
 		ok = False
-		if cl.get_superclassname() in framework_api:
-			ok = True;
+		cl_p = cl
+		while cl_p.get_superclassname() != cl_p.get_name():
+			if cl_p.get_superclassname() in framework_api:
+				ok = True
+				break
+			if cl_p.get_superclassname() in string_class_map:
+				cl_p = string_class_map[cl_p.get_superclassname()]
+			else:
+				break
 		interfaces = []
 		if cl.get_interfaces() != None:
 			#interface_string = cl.get_interfaces()[1:-1]
@@ -174,17 +181,28 @@ def find_entry_points(a, d, framework_api, entry_points, invokes):
 			for interface in interfaces:
 				if interface in framework_api:
 					ok = True
+
 		if not ok:
 			continue
+
 		for method in cl.get_methods():
 			ok = False
-			if cl.get_superclassname() in framework_api and method.get_name() in framework_api[cl.get_superclassname()]:
-				ok = True;
+			cl_p = cl
+			while cl_p.get_superclassname() != cl_p.get_name():
+				if cl_p.get_superclassname() in framework_api and method.get_name() in framework_api[cl_p.get_superclassname()]:
+					ok = True
+					break
+				if cl_p.get_superclassname() in string_class_map:
+					cl_p = string_class_map[cl_p.get_superclassname()]
+				else:
+					break
 			for interface in interfaces:
 				if interface in framework_api and method.get_name() in framework_api[interface]:
 					ok = True
+					break
 			if not ok:
 				continue
+
 			#If we reached here method is overloading one of the framework methods
 			name = method.get_class_name() + "->" + method.get_name() + method.get_descriptor()
 			if not name in mark and not name in isinvoked and cl.get_name() + "->" + "<init>" in graph:
