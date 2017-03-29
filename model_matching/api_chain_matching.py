@@ -6,8 +6,14 @@ import api_chains
 
 work_until_first_match = False
 
-def get_similar(andr_a, andr_d, app_list):
+def get_api_chains(andr_a, andr_d):
+	return api_chains.get_api_chains(andr_a, andr_d)
+
+def get_similar_short(andr_a, andr_d, app_list):
 	api_chains_app = api_chains.get_api_chains(andr_a, andr_d)
+	return get_similar(api_chains_app, app_list)
+
+def get_similar(api_chains_app, app_list):
 	if (api_chains_app == None):
 		return []
 	similar_apps = []
