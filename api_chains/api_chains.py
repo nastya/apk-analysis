@@ -304,6 +304,31 @@ def get_api_chains(andr_a, andr_d):
 		api_chains1.append(ApiChain(root, simplifyAPIChain(api_chain)))
 	return api_chains1
 
+def chains_unique(api_chains1, api_chains2, common_chains = None):
+	if len(api_chains1) != len(api_chains2):
+		return False
+	api_chains1 = sorted(api_chains1, key = lambda api_chain: len(api_chain.chain), reverse = True)
+	common_chains_count = 0
+	mark_chains = [False for x in range(len(api_chains2))]
+	for api_chain11 in api_chains1:
+		api_chain1 = api_chain11.chain
+		for i in range(len(api_chains2)):
+			if mark_chains[i]:
+				continue
+			api_chain22 = api_chains2[i]
+			api_chain2 = api_chains2[i].chain
+			lcs_length = longestCommonSubsequence(api_chain1, api_chain2)
+
+			if (lcs_length == len(api_chain1) and lcs_length == len(api_chain2)):
+				common_chains_count += 1
+				mark_chains[i] = True
+			if common_chains != None:
+				common_chains.append(ApiChain(api_chain11.root, api_chain1, api_chain22.root, 1))
+	if common_chains_count == len(api_chains1):
+		return True
+	else:
+		return False
+
 def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 	common_dangerous_subsequences = 0 #long and dangerous do not intersect, in case of both it's considered dangerous
 	common_long_subsequences = 0
