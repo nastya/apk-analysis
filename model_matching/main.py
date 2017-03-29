@@ -4,7 +4,6 @@ sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
-import androlyze as anz
 
 import permission_matching
 import api_matching
@@ -78,6 +77,8 @@ for sample in similar_api_list:
 	api_chains_sample_list = []
 	for api_chain in api_chains_sample_dict:
 		api_chains_sample_list.append(api_chain_matching.api_chains.ApiChain(api_chain, api_chains_sample_dict[api_chain]))
+	if (api_chains_sample_list == []): #ignoring empty malware models if any
+			continue
 	
 	mal_a = sum((1 if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)
 	mal_b = sum((len(x.chain) if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)
@@ -85,10 +86,17 @@ for sample in similar_api_list:
 	a,b,c,d = api_chains.compare_api_chains(api_chains_app, api_chains_sample_list, common_chains)
 	print a, b, c, d, mal_a, mal_b, 'Sample: ', sample
 
+	flag_similar = False
 	if (a >= api_chains.threshold_total_common_chains and b >= api_chains.threshold_total_common_length) or \
 		(c >= 2) or (c >= 1 and d >= 1) or \
 		(d >= 1 and b >= api_chains.threshold_total_common_length) or \
 		(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= api_chains.threshold_identical_num_chains and b * 1.0 / mal_b >= api_chains.threshold_identical_len_chains):
+			flag_similar = True
+	else:
+		common_chains = []
+		if api_chains.chains_unique(api_chains_app, api_chains_sample_list, common_chains):
+			flag_similar = True
+	if flag_similar:
 		print 'Common API chains with', sample
 		is_malicious = True
 		for i in range(0, len(common_chains)):
