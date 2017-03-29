@@ -48,7 +48,7 @@ for line in f:
 		malicious_m += 1
 	similarities_found_m[package_name] = similar_api_list
 
-	similar_api_chains_list = api_chain_matching.get_similar(andr_a, andr_d, similar_api_list)
+	similar_api_chains_list = api_chain_matching.get_similar_short(andr_a, andr_d, similar_api_list)
 	if len(similar_api_chains_list) != 0:
 		malicious_chains_m += 1
 		print 'malicious', similar_api_chains_list
@@ -93,7 +93,7 @@ for line in f:
 		malicious_b += 1
 	similarities_found_b[package_name] = similar_api_list
 
-	similar_api_chains_list = api_chain_matching.get_similar(andr_a, andr_d, similar_api_list)
+	similar_api_chains_list = api_chain_matching.get_similar_short(andr_a, andr_d, similar_api_list)
 	if len(similar_api_chains_list) != 0:
 		malicious_chains_b += 1
 		print 'malicious', similar_api_list
