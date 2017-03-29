@@ -30,7 +30,6 @@ threshold_total_common_length = 50
 threshold_identical_num_chains = 0.95
 threshold_identical_len_chains = 0.95
 minimum_length = 3
-limit = 50
 
 api_json = '../api.json'
 #Loading framework methods
