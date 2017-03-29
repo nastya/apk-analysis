@@ -36,7 +36,7 @@ def analyze_malicious(package_list, similarities_found, similarities_found_by_pe
 			similar_api_list = api_matching.get_similar_api(api, similar_list)
 			similarities_found[package_name] = similar_api_list
 
-			similar_api_chains_list = api_chain_matching.get_similar(andr_a, andr_d, similar_api_list)
+			similar_api_chains_list = api_chain_matching.get_similar_short(andr_a, andr_d, similar_api_list)
 			similarities_found_by_chains[package_name] = similar_api_chains_list
 		except:
 			print 'Failed to decompile app'
