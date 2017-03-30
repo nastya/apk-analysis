@@ -8,6 +8,7 @@ import entry_points_discovery_module
 sys.path.append('../')
 import known_libs
 import interesting_api
+import thresholds
 
 sys.path.append('../../androguard')
 from androguard.core.bytecode import *
@@ -22,14 +23,10 @@ class ApiChain:
 		self.root2 = root2
 		self.components = components
 
-threshold_common_length = 0.85 #percentage
-threshold_suspicious_length = 6
-threshold_length = 30 #methods in API chain
-threshold_total_common_chains = 7
-threshold_total_common_length = 50
-threshold_identical_num_chains = 0.95
-threshold_identical_len_chains = 0.95
-minimum_length = 3
+threshold_common_length = thresholds.api_chains_common_length #ratio
+threshold_suspicious_length = thresholds.api_chains_suspicious_length
+threshold_length = thresholds.api_chains_length
+minimum_length = thresholds.api_chains_minimum_length
 
 api_json = '../api.json'
 #Loading framework methods

@@ -14,6 +14,7 @@ import api_chains
 
 sys.path.append('../')
 import interesting_api
+import thresholds
 
 samples_dir = "../../drebin_samples"
 import os, fnmatch
@@ -80,17 +81,17 @@ for sample in similar_api_list:
 	if (api_chains_sample_list == []): #ignoring empty malware models if any
 			continue
 	
-	mal_a = sum((1 if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)
-	mal_b = sum((len(x.chain) if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)
+	mal_a = sum((1 if len(x.chain) >= thresholds.api_chains_minimum_length else 0) for x in api_chains_sample_list)
+	mal_b = sum((len(x.chain) if len(x.chain) >= thresholds.api_chains_minimum_length else 0) for x in api_chains_sample_list)
 	common_chains = []
 	a,b,c,d = api_chains.compare_api_chains(api_chains_app, api_chains_sample_list, common_chains)
 	print a, b, c, d, mal_a, mal_b, 'Sample: ', sample
 
 	flag_similar = False
-	if (a >= api_chains.threshold_total_common_chains and b >= api_chains.threshold_total_common_length) or \
+	if (a >= thresholds.api_chains_total_common_chains and b >= thresholds.api_chains_total_common_length) or \
 		(c >= 2) or (c >= 1 and d >= 1) or \
-		(d >= 1 and b >= api_chains.threshold_total_common_length) or \
-		(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= api_chains.threshold_identical_num_chains and b * 1.0 / mal_b >= api_chains.threshold_identical_len_chains):
+		(d >= 1 and b >= thresholds.api_chains_total_common_length) or \
+		(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= thresholds.api_chains_identical_num_chains and b * 1.0 / mal_b >= thresholds.api_chains_identical_len_chains):
 			flag_similar = True
 	else:
 		common_chains = []

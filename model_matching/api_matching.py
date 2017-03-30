@@ -2,13 +2,14 @@
 import sys
 import api_model
 import interesting_api
+sys.path.append('../')
+import thresholds
 
 sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
 
-threshold = 0.8
 count_unused_api = False
 
 #Loading framework methods
@@ -121,6 +122,6 @@ def get_similar_api(api_fv, hashnames):
 		return []
 	similar = []
 	for hashname in hashnames:
-		if similarity_function(api_fv, api_model.malw_api_vectors[hashname]) > threshold:
+		if similarity_function(api_fv, api_model.malw_api_vectors[hashname]) > thresholds.api_sim_function:
 			similar.append(hashname)
 	return similar

@@ -3,14 +3,13 @@ import sys
 import permission_model
 sys.path.append('../')
 import system_perms
+import thresholds
 
 sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
 
-threshold = 0.7
-coef_extra = 0.5
 
 def get_perm_vector(andr_a):
 	#print ('Getting permissions vector...')
@@ -46,7 +45,7 @@ def get_similar(perms):
 			if perms[perm] == 1 and perms[perm] ==  permission_model.malw_perm_vectors[hashname][perm]:
 				score += system_perms.perms_weight[perm]
 			if perms[perm] == 1 and perms[perm] != permission_model.malw_perm_vectors[hashname][perm]:
-				score += coef_extra
+				score += thresholds.perm_coef_extra
 			if perms[perm] == 1:
 				a_count += 1
 			if permission_model.malw_perm_vectors[hashname][perm] == 1:
@@ -55,7 +54,7 @@ def get_similar(perms):
 			similarity = score *1.0 / (a_count + b_count)
 		else:
 			similarity = 1 
-		if similarity >= threshold:
+		if similarity >= thresholds.perm_sim_function:
 			similar_hashes.append(hashname)
 	return similar_hashes
 

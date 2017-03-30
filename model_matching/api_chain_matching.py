@@ -4,6 +4,9 @@ import api_chain_model
 sys.path.append('../api_chains')
 import api_chains
 
+sys.path.append('../')
+import thresholds
+
 work_until_first_match = False
 
 def get_api_chains(andr_a, andr_d):
@@ -31,10 +34,10 @@ def get_similar(api_chains_app, app_list):
 		mal_b = sum((len(x.chain) if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)
 		a,b,c,d = api_chains.compare_api_chains(api_chains_app, api_chains_sample_list)
 
-		if (a >= api_chains.threshold_total_common_chains and b >= api_chains.threshold_total_common_length) or \
+		if (a >= thresholds.api_chains_total_common_chains and b >= thresholds.api_chains_total_common_length) or \
 			(c >= 2) or (c >= 1 and d >= 1) or \
-			(d >= 1 and b >= api_chains.threshold_total_common_length) or \
-			(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= api_chains.threshold_identical_num_chains and b * 1.0 / mal_b >= api_chains.threshold_identical_len_chains) or \
+			(d >= 1 and b >= thresholds.api_chains_total_common_length) or \
+			(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= thresholds.api_chains_identical_num_chains and b * 1.0 / mal_b >= thresholds.api_chains_identical_len_chains) or \
 			api_chains.chains_unique(api_chains_app, api_chains_sample_list):
 			similar_apps.append(sample)
 			if work_until_first_match:
@@ -61,15 +64,15 @@ def get_similar_detailed(andr_a, andr_d, app_list):
 		a,b,c,d = api_chains.compare_api_chains(api_chains_app, api_chains_sample_list)
 
 		similar_apps[sample] = []
-		if (a >= api_chains.threshold_total_common_chains and b >= api_chains.threshold_total_common_length):
+		if (a >= thresholds.api_chains_total_common_chains and b >= thresholds.api_chains_total_common_length):
 			similar_apps[sample].append(1)
 		if (c >= 2):
 			similar_apps[sample].append(2)
 		if (c >= 1 and d >= 1):
 			similar_apps[sample].append(3)
-		if (d >= 1 and b >= api_chains.threshold_total_common_length):
+		if (d >= 1 and b >= thresholds.api_chains_total_common_length):
 			similar_apps[sample].append(4)
-		if (mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= api_chains.threshold_identical_num_chains and b * 1.0 / mal_b >= api_chains.threshold_identical_len_chains):
+		if (mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= thresholds.api_chains_identical_num_chains and b * 1.0 / mal_b >= thresholds.api_chains_identical_len_chains):
 			similar_apps[sample].append(5)
 		if api_chains.chains_unique(api_chains_app, api_chains_sample_list):
 			similar_apps[sample].append(6)
