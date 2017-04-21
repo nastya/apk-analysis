@@ -211,21 +211,17 @@ def longestCommonSubsequence(api_chain1, api_chain2):
 		return 0
 
 	f = [[0 for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
-	prev = [[(0,0) for x in range(len(api_chain2) + 1)] for x in range(len(api_chain1) + 1)]
 	for i in range(0, len(api_chain1) + 1):
 		for j in range(0, len(api_chain2) + 1):
 			if (i == 0 or j == 0):
 				f[i][j] = 0
 			elif api_chain1[i - 1] == api_chain2[j - 1]:
 				f[i][j] = f[i-1][j-1] + 1
-				prev[i][j] = (i-1, j-1)
 			else:
 				if (f[i-1][j] > f[i][j-1]):
 					f[i][j] = f[i-1][j]
-					prev[i][j] = (i-1, j)
 				else:
 					f[i][j] = f[i][j-1]
-					prev[i][j] = (i, j-1)
 
 	return f[len(api_chain1) ][len(api_chain2)]
 
