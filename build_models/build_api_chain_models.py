@@ -36,7 +36,10 @@ for line in f_list:
 		print 'Failed to decompile'
 		continue
 
-	app_api_chains = api_chains.get_api_chains(a, d)
+	try:
+		app_api_chains = api_chains.get_api_chains(a, d)
+	except UnicodeEncodeError:
+		continue #do not process such errors yet
 	if app_api_chains == None:
 		continue
 	features = {}
