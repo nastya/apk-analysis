@@ -110,6 +110,8 @@ def get_max_similarity(api_fv, hashnames = None):
 	max_s = 0
 	hashname_max_sim = None
 	for m_name in (hashnames if hashnames != None else api_model.malw_api_vectors):
+		if not m_name in api_model.malw_api_vectors:
+			continue
 		matched_s = similarity_function(api_fv, api_model.malw_api_vectors[m_name])
 		if matched_s > max_s:
 			max_s = matched_s
@@ -122,6 +124,8 @@ def get_similar_api(api_fv, hashnames):
 		return []
 	similar = []
 	for hashname in hashnames:
+		if not hashname in api_model.malw_api_vectors:
+			continue
 		if similarity_function(api_fv, api_model.malw_api_vectors[hashname]) > thresholds.api_sim_function:
 			similar.append(hashname)
 	return similar
