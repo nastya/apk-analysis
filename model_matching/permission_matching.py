@@ -50,8 +50,8 @@ def get_similar(perms):
 				a_count += 1
 			if permission_model.malw_perm_vectors[hashname][perm] == 1:
 				b_count += 1
-		if (a_count + b_count != 0):
-			similarity = score *1.0 / (a_count + b_count)
+		if (b_count != 0):
+			similarity = score * 0.5 / (b_count)
 		else:
 			similarity = 1 
 		if similarity >= thresholds.perm_sim_function:
