@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-perm_coef_extra = 0.5
-perm_sim_function = 0.7
+perm_coef_extra = 0
+perm_sim_function = 0.9
 
-api_sim_function = 0.8
+api_sim_function = 0.7
 
 api_chains_common_length = 0.85 #percentage
 api_chains_suspicious_length = 6
