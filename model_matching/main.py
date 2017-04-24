@@ -11,6 +11,7 @@ import api_matching
 import api_chain_matching
 sys.path.append('../api_chains')
 import api_chains
+import detectLibPackages
 
 sys.path.append('../')
 import interesting_api
@@ -28,9 +29,14 @@ def find(pattern, path):
 
 if (len(sys.argv) > 1):
 	package_name = sys.argv[1]
+	if len(sys.argv) > 3 and sys.argv[2] == '-b':
+		api_chains.bloom_f = True
+		detectLibPackages.set_bloom_filter(sys.argv[3])
 else:
 	print 'Usage:'
-	print sys.argv[0], 'apkfile'
+	print sys.argv[0], 'apkfile [-b filter_file]'
+	print '    -b option enables filtering library packages using bloom filter with hashes,'
+	print '     by default this filtering is done via string matching.'
 	sys.exit()
 
 try:

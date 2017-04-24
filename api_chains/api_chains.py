@@ -9,12 +9,15 @@ sys.path.append('../')
 import known_libs
 import interesting_api
 import thresholds
+import detectLibPackages
 
 sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
 from sets import Set
+
+bloom_f = False
 
 class ApiChain:
 	def __init__(self, root = '', chain = [], root2 = '', components = 0):
@@ -234,14 +237,20 @@ def simplifyAPIChain(api_chain):
 		api_chain_simplified.append(cl_name + meth_name)
 	return api_chain_simplified
 
-def isLibraryClass(classname):
+def isLibraryClass(classname, libs_by_filter = None):
 	package_method = False
-	for package in known_libs.known_libs:
-		package_name = "L" + package + "/"
-		package_name = package_name.replace(".", "/")
-		if package_name in classname:
-			package_method = True
-			break
+	if libs_by_filter == None:
+		for package in known_libs.known_libs:
+			package_name = "L" + package + "/"
+			package_name = package_name.replace(".", "/")
+			if package_name in classname:
+				package_method = True
+				break
+	else:
+		for lib in libs_by_filter:
+			if lib in classname:
+				package_method = True
+				break
 	return package_method
 
 def isSuspiciousChain(api_chain):
@@ -253,8 +262,8 @@ def isSuspiciousChain(api_chain):
 def printApiChain(api_chain):
 	print api_chain.root, ":", api_chain.chain
 
-def dfs(root, invokes, mark, api_chain, consider_libs = False):
-	if (not consider_libs and isLibraryClass(root.split("->")[0])):
+def dfs(root, invokes, mark, api_chain, consider_libs = False, libs_by_filter = None):
+	if (not consider_libs and isLibraryClass(root.split("->")[0], libs_by_filter)):
 		return
 
 	if not root in mark or mark[root] == False:
@@ -268,12 +277,16 @@ def dfs(root, invokes, mark, api_chain, consider_libs = False):
 		meth_name = invoke.split("->")[1].split("(")[0]
 		if cl_name in framework_api and meth_name in framework_api[cl_name]:
 			api_chain.append(invoke)
-		if (not consider_libs and isLibraryClass(cl_name)):
+		if (not consider_libs and isLibraryClass(cl_name, libs_by_filter)):
 			api_chain.append(invoke)
 			continue
 		dfs(invoke, invokes, mark, api_chain)
 
 def get_api_chains(andr_a, andr_d):
+	libs_by_filter = None
+	if bloom_f:
+		libs_by_filter = detectLibPackages.detect_lib_packages_v2(andr_d)
+		print libs_by_filter
 	entry_points1 = []
 	invokes1 = {}
 	entry_points_discovery_module.find_entry_points(andr_a, andr_d, framework_api, entry_points1, invokes1)
@@ -284,11 +297,11 @@ def get_api_chains(andr_a, andr_d):
 		root = method.get_class_name() + "->" + method.get_name() + method.get_descriptor()
 		api_chain = []
 		mark_before = copy.deepcopy(mark1)
-		dfs(root, invokes1, mark1, api_chain, True) #traversing library calls
+		dfs(root, invokes1, mark1, api_chain, True, libs_by_filter) #traversing library calls
 		if (not isSuspiciousChain(simplifyAPIChain(api_chain))):
 			api_chain = []
 			mark1 = copy.deepcopy(mark_before)
-			dfs(root, invokes1, mark1, api_chain) #ignoring library calls
+			dfs(root, invokes1, mark1, api_chain, False, libs_by_filter) #ignoring library calls
 		if (api_chain == []):
 			continue
 		#print root
