@@ -3,6 +3,7 @@ import sys
 import api_chain_model
 sys.path.append('../api_chains')
 import api_chains
+api_chains.set_map_api_num()
 
 sys.path.append('../')
 import thresholds
@@ -25,9 +26,8 @@ def get_similar(api_chains_app, app_list):
 		if not sample in api_chain_model.malw_api_chain_models:
 			continue
 		api_chains_sample_dict = api_chain_model.malw_api_chain_models[sample]
-		api_chains_sample_list = []
-		for api_chain in api_chains_sample_dict:
-			api_chains_sample_list.append(api_chains.ApiChain(api_chain, api_chains_sample_dict[api_chain]))
+		api_chains_sample_list = api_chain_model.malw_api_chain_models_in_lists[sample]
+
 		if (api_chains_sample_list == []): #ignoring empty malware models if any
 			continue
 		mal_a = sum((1 if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)
@@ -54,9 +54,8 @@ def get_similar_detailed(andr_a, andr_d, app_list):
 		if not sample in api_chain_model.malw_api_chain_models:
 			continue
 		api_chains_sample_dict = api_chain_model.malw_api_chain_models[sample]
-		api_chains_sample_list = []
-		for api_chain in api_chains_sample_dict:
-			api_chains_sample_list.append(api_chains.ApiChain(api_chain, api_chains_sample_dict[api_chain]))
+		api_chains_sample_list = api_chain_model.malw_api_chain_models_in_lists[sample]
+
 		if (api_chains_sample_list == []): #ignoring empty malware models if any
 			continue
 		mal_a = sum((1 if len(x.chain) >= api_chains.minimum_length else 0) for x in api_chains_sample_list)

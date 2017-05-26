@@ -19,6 +19,8 @@ import thresholds
 
 samples_dir = "../../drebin_samples"
 import os, fnmatch
+import time
+
 def find(pattern, path):
     result = []
     for root, dirs, files in os.walk(path):
@@ -40,12 +42,15 @@ else:
 	sys.exit()
 
 try:
+	time_s = time.time()
 	andr_a = APK(package_name)
 	andr_d = dvm.DalvikVMFormat( andr_a.get_dex() )
+	time_decompile = time.time() - time_s
 except:
 	print 'Failed to decompile app'
 	sys.exit()
 
+time_s = time.time()
 perms = permission_matching.get_perm_vector(andr_a)
 similar_list = permission_matching.get_similar(perms)
 if similar_list != []:
@@ -53,7 +58,9 @@ if similar_list != []:
 	for x in similar_list:
 		print x
 	print '___________________________________________________________________'
+time_perms = time.time() - time_s
 
+time_s = time.time()
 api = api_matching.get_used_api(andr_d)
 similar_api_list = api_matching.get_similar_api(api, similar_list)
 
@@ -64,11 +71,14 @@ if len(similar_api_list) != 0:
 	print '___________________________________________________________________'
 else:
 	print 'No API-similarities with malware models'
+time_api = time.time() - time_s
 
+time_s = time.time()
 api_chains_app = api_chains.get_api_chains(andr_a, andr_d)
 if (api_chains_app == None):
 	print 'Failed to obtain chains of app', package_name
 	sys.exit(0)
+time_getting_chains = time.time() - time_s
 
 
 api_chains_app_dict = {}
@@ -77,13 +87,13 @@ for api_chain in api_chains_app:
 
 is_malicious = False
 
-for sample in similar_api_list:	
+time_s = time.time()
+for sample in similar_api_list:
 	if (not sample in api_chain_matching.api_chain_model.malw_api_chain_models):
 		continue
 	api_chains_sample_dict = api_chain_matching.api_chain_model.malw_api_chain_models[sample]
-	api_chains_sample_list = []
-	for api_chain in api_chains_sample_dict:
-		api_chains_sample_list.append(api_chain_matching.api_chains.ApiChain(api_chain, api_chains_sample_dict[api_chain]))
+
+	api_chains_sample_list = api_chain_matching.api_chain_model.malw_api_chain_models_in_lists[sample]
 	if (api_chains_sample_list == []): #ignoring empty malware models if any
 			continue
 	
@@ -122,6 +132,15 @@ for sample in similar_api_list:
 				print common_chains[i].chain[j]
 			print '-------------------------------------------------------------------'
 		print '___________________________________________________________________'
+time_compare = time.time() - time_s
+
+print 'Time to decompile:', time_decompile
+print 'Time to compare perms:', time_perms
+print 'Time to compare api:', time_api
+print 'Time to build chain model', time_getting_chains
+print 'Time to compare chains:', time_compare
+print 'Time spent in lcs:', api_chains.time_spent_in_lcs
+print 'Time on finding entry points:', api_chains.time_entry_points
 
 if is_malicious:
 	print 'Identified as malware'

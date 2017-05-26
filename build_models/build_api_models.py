@@ -74,6 +74,8 @@ for line in f_list:
 	count_apps += 1
 	print 'Processing', apk_name, '(', count_apps, ' / ', total_apps, ')'
 	apk_hash = hashlib.sha256(open(apk_name, 'r').read()).hexdigest()
+	if os.path.isfile(save_directory + '/' + apk_hash):
+		continue
 	api = get_used_api(apk_name)
 	features = {}
 	for func in interesting_api.interesting_api_20:

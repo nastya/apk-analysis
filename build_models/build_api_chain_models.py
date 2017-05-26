@@ -7,6 +7,9 @@ import json
 sys.path.append('../api_chains')
 import api_chains
 
+sys.path.append('..')
+import detectLibPackages
+
 sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
@@ -15,6 +18,9 @@ from androguard.core.analysis.analysis import *
 save_directory = "../api_chain_models"
 if not os.path.exists(save_directory):
     os.makedirs(save_directory)
+
+api_chains.bloom_f = False ###enabling bloom filter
+detectLibPackages.set_bloom_filter('/home/nastya/repo/libs_py.bbf') ###setting it
 
 
 analyzed_apps = 'malware_for_models.txt'
@@ -28,6 +34,8 @@ for line in f_list:
 	count_apps += 1
 	print 'Processing', apk_name, '(', count_apps, ' / ', total_apps, ')'
 	apk_hash = hashlib.sha256(open(apk_name, 'r').read()).hexdigest()
+	if os.path.isfile(save_directory + '/' + apk_hash):
+		continue
 
 	try:
 		a = APK(apk_name)

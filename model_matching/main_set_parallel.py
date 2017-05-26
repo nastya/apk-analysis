@@ -10,11 +10,21 @@ import api_matching
 import api_chain_matching
 api_chain_matching.work_until_first_match = True
 
+sys.path.append('..')
+import thresholds
+import detectLibPackages
+
+sys.path.append('../api_chains')
+import api_chains
+
 import json
 from multiprocessing import Process, Manager
 import copy
 import math
 import os
+
+api_chains.bloom_f = False ###enabling bloom filter
+detectLibPackages.set_bloom_filter('/home/nastya/repo/libs_py.bbf') ###setting it
 
 num_processes = 4
 apps_per_run = 200

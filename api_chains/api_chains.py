@@ -6,10 +6,13 @@ sys.path.append('../entry_points_discovery')
 import entry_points_discovery_module
 
 sys.path.append('../')
+import common_classes
 import known_libs
 import interesting_api
 import thresholds
 import detectLibPackages
+import json
+import operator
 
 sys.path.append('../../androguard')
 from androguard.core.bytecode import *
@@ -19,12 +22,39 @@ from sets import Set
 
 bloom_f = False
 
+import time
+time_spent_in_lcs = 0
+time_entry_points = 0
+map_api_num = {}
+count_calls = 0
+
+def set_map_api_num():
+	global count_calls
+	map_api_num = json.loads(open('map_api_num.json', 'r').read())
+	last_call, count_calls = sorted(map_api_num.items(), key=operator.itemgetter(1), reverse = True)[0]
+	count_calls += 1
+	print count_calls
+
 class ApiChain:
 	def __init__(self, root = '', chain = [], root2 = '', components = 0):
 		self.chain = chain
 		self.root = root
 		self.root2 = root2
 		self.components = components
+		self.num_chain = []
+	def set_num_chain(self, num_list):
+		self.num_chain = num_list
+
+	@staticmethod
+	def get_numeric_chain(str_chain):
+		global count_calls
+		model_api_num = []
+		for api_call in str_chain:
+			call_cl = api_call[:api_call.find(';') + 1]
+			if call_cl in common_classes.very_common_classes:
+				continue
+			model_api_num.append(map_api_num[api_call] if api_call in map_api_num else count_calls)
+		return model_api_num
 
 threshold_common_length = thresholds.api_chains_common_length #ratio
 threshold_suspicious_length = thresholds.api_chains_suspicious_length
@@ -210,6 +240,9 @@ def lcs_min_comp_v2(api_chain1, api_chain2):
 	return (f[len(api_chain1)][len(api_chain2)], bestcomp, bestsusp)
 
 def longestCommonSubsequence(api_chain1, api_chain2):
+	global time_spent_in_lcs
+	time_s = time.time()
+
 	if (len(api_chain1) == 0 or len(api_chain2) == 0):
 		return 0
 
@@ -225,9 +258,8 @@ def longestCommonSubsequence(api_chain1, api_chain2):
 					f[i][j] = f[i-1][j]
 				else:
 					f[i][j] = f[i][j-1]
-
+	time_spent_in_lcs += time.time() - time_s
 	return f[len(api_chain1) ][len(api_chain2)]
-
 
 def simplifyAPIChain(api_chain):
 	api_chain_simplified = []
@@ -283,13 +315,15 @@ def dfs(root, invokes, mark, api_chain, consider_libs = False, libs_by_filter = 
 		dfs(invoke, invokes, mark, api_chain)
 
 def get_api_chains(andr_a, andr_d):
+	global time_entry_points
 	libs_by_filter = None
 	if bloom_f:
 		libs_by_filter = detectLibPackages.detect_lib_packages_v2(andr_d)
-		print libs_by_filter
 	entry_points1 = []
 	invokes1 = {}
+	time_s = time.time()
 	entry_points_discovery_module.find_entry_points(andr_a, andr_d, framework_api, entry_points1, invokes1)
+	time_entry_points = time.time() - time_s
 	mark1 = {}
 	mark_before = {}
 	api_chains1 = []
@@ -304,10 +338,9 @@ def get_api_chains(andr_a, andr_d):
 			dfs(root, invokes1, mark1, api_chain, False, libs_by_filter) #ignoring library calls
 		if (api_chain == []):
 			continue
-		#print root
-		#print 'API chain: ', api_chain
-		
-		api_chains1.append(ApiChain(root, simplifyAPIChain(api_chain)))
+		added_chain = ApiChain(root, simplifyAPIChain(api_chain))
+		added_chain.set_num_chain(ApiChain.get_numeric_chain(simplifyAPIChain(api_chain)))
+		api_chains1.append(added_chain)
 	return api_chains1
 
 def chains_unique(api_chains1, api_chains2, common_chains = None):
@@ -352,10 +385,10 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 				continue
 			api_chain22 = api_chains2[i]
 			api_chain2 = api_chains2[i].chain
-			lcs_length = longestCommonSubsequence(api_chain1, api_chain2)
+			lcs_length = longestCommonSubsequence(api_chain11.num_chain, api_chain22.num_chain)
 
-			if (lcs_length >= minimum_length and len(api_chain2) > 0 and \
-				lcs_length * 1.0 / len(api_chain2) >= threshold_common_length):
+			if (lcs_length >= minimum_length and len(api_chain22.num_chain) > 0 and \
+				lcs_length * 1.0 / len(api_chain22.num_chain) >= threshold_common_length):
 				if lcs_length > longest_match_length:
 					longest_match_ind = i
 					longest_match_length = lcs_length
@@ -382,7 +415,7 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 				flag_dangerous = True
 			if (chain_components < lcs_length / 3 + 1 or flag_long or flag_dangerous):
 				total_common_chains += 1
-				total_common_length += longest_match_length
+				total_common_length += lcs_length
 				mark_chains[longest_match_ind] = True
 				if common_chains != None:
 					common_chains.append(ApiChain(api_chain11.root, lcs, api_chain22.root, chain_components))

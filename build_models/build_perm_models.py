@@ -25,7 +25,10 @@ for line in f:
 	package_name = line[:-1]
 	count_apps += 1
 	print 'Processing', package_name, '(', count_apps, ' / ', total_apps, ')'
-	
+	apk_hash = hashlib.sha256(open(package_name, 'r').read()).hexdigest()
+	if os.path.isfile(fv_directory + '/' + apk_hash):
+		continue
+
 	#getting permissions
 	try:
 		a = APK(package_name)
@@ -44,7 +47,6 @@ for line in f:
 			perms_fv[perm] = 1
                 
 	#saving
-	apk_hash = hashlib.sha256(open(package_name, 'r').read()).hexdigest()
 	out_f = open(fv_directory + '/' + apk_hash, 'w')
 	out_f.write(json.dumps(perms_fv, sort_keys=True, indent=4, separators=(',', ': ')))
 	out_f.close()

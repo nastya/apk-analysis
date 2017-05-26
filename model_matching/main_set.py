@@ -4,12 +4,14 @@ sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
-import androlyze as anz
 
 import permission_matching
 import api_matching
 import api_chain_matching
 api_chain_matching.work_until_first_match = True
+
+sys.path.append('../api_chains')
+import api_chains
 
 import json
 
