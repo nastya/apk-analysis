@@ -30,10 +30,10 @@ count_calls = 0
 
 def set_map_api_num():
 	global count_calls
+	global map_api_num
 	map_api_num = json.loads(open('map_api_num.json', 'r').read())
 	last_call, count_calls = sorted(map_api_num.items(), key=operator.itemgetter(1), reverse = True)[0]
 	count_calls += 1
-	print count_calls
 
 class ApiChain:
 	def __init__(self, root = '', chain = [], root2 = '', components = 0):
@@ -386,7 +386,6 @@ def compare_api_chains(api_chains1, api_chains2, common_chains = None):
 			api_chain22 = api_chains2[i]
 			api_chain2 = api_chains2[i].chain
 			lcs_length = longestCommonSubsequence(api_chain11.num_chain, api_chain22.num_chain)
-
 			if (lcs_length >= minimum_length and len(api_chain22.num_chain) > 0 and \
 				lcs_length * 1.0 / len(api_chain22.num_chain) >= threshold_common_length):
 				if lcs_length > longest_match_length:

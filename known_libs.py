@@ -130,6 +130,10 @@ known_libs = [
 	'jp.co.nobot.libAdMaker',
 	'ch.boye.httpclientandroidlib',
 	'magmamobile.lib',
-	'com.magmamobile'
+	'com.magmamobile',
+	
+	#From vshare
+	'com.ironsource.mobilcore',
+	'com.startapp.android.publish'
 ]
  
