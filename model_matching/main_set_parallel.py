@@ -23,7 +23,7 @@ import math
 import os
 
 api_chains.bloom_f = False ###enabling bloom filter
-detectLibPackages.set_bloom_filter('/home/nastya/repo/libs_py.bbf') ###setting it
+detectLibPackages.set_bloom_filter(os.path.abspath('../libs_py.bbf')) ###setting it
 
 num_processes = 4
 apps_per_run = 200
