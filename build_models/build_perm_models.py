@@ -7,7 +7,6 @@ import system_perms
 import hashlib
 import os
 
-sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *

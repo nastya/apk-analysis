@@ -10,7 +10,6 @@ import api_chains
 sys.path.append('..')
 import detectLibPackages
 
-sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *

@@ -5,7 +5,6 @@ import md5
 sys.path.append('..')
 import known_libs
 
-sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *

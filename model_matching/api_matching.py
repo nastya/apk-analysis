@@ -5,7 +5,6 @@ import interesting_api
 sys.path.append('../')
 import thresholds
 
-sys.path.append('../../androguard')
 from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
