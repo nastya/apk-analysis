@@ -13,7 +13,10 @@ TH_COMMON_CLASS = 0.8
 
 def set_bloom_filter(bbf_file):
 	global bloom
-	bloom = pydablooms.load_dabloom(capacity=10000000, error_rate=.05, filepath=bbf_file)
+	if os.path.exists(bbf_file):
+		bloom = pydablooms.load_dabloom(capacity=10000000, error_rate=.05, filepath=bbf_file)
+	else:
+		print "WARNING: bloom filter file", bbf_file, "doesn't exist"
 
 def transform_lib_name(name):
 	return 'L' + name.replace('.', '/') 
