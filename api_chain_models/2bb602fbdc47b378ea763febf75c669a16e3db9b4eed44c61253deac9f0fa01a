@@ -1,0 +1,1 @@
+{"Lcom/agewap/om/OperaMiniActivity;->onCreate(Landroid/os/Bundle;)V": ["Landroid/app/Activity;onCreate", "Ljava/io/File;exists", "Ljava/lang/System;exit", "Ljava/io/OutputStreamWriter;flush", "Ljava/io/OutputStreamWriter;close", "Landroid/telephony/SmsManager;sendTextMessage"]}
