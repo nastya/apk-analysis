@@ -4,6 +4,8 @@ from androguard.core.bytecode import *
 from androguard.core.bytecodes.apk import *
 from androguard.core.analysis.analysis import *
 
+from optparse import OptionParser
+
 import permission_matching
 import api_matching
 
@@ -21,24 +23,32 @@ import os, fnmatch
 import time
 
 def find(pattern, path):
-    result = []
-    for root, dirs, files in os.walk(path):
-        for name in files:
-            if fnmatch.fnmatch(name, pattern):
-                result.append(os.path.join(root, name))
-    return result
+	result = []
+	for root, dirs, files in os.walk(path):
+		for name in files:
+			if fnmatch.fnmatch(name, pattern):
+				result.append(os.path.join(root, name))
+	return result
 
-if (len(sys.argv) > 1):
-	package_name = sys.argv[1]
-	if len(sys.argv) > 3 and sys.argv[2] == '-b':
-		api_chains.bloom_f = True
-		detectLibPackages.set_bloom_filter(sys.argv[3])
-else:
-	print 'Usage:'
-	print sys.argv[0], 'apkfile [-b filter_file]'
-	print '    -b option enables filtering library packages using bloom filter with hashes,'
-	print '     by default this filtering is done via string matching.'
+usage = "Usage: %prog [options] apkfile"
+parser = OptionParser(usage)
+parser.add_option("-o", "--output", dest="out_dir",
+				  help="specifies where to store output such as graphs and chains")
+parser.add_option("-b", "--bloom", dest="bloom",
+				  help="enables filtering library packages using bloom filter with hashes, by default this filtering is done via string matching", metavar="FILE")
+
+(options, args) = parser.parse_args()
+if len(args) < 1:
+	print 'No apkfile specified to analyze'
+	parser.print_help()
 	sys.exit()
+package_name = args[0]
+if options.bloom:
+	api_chains.bloom_f = True
+	detectLibPackages.set_bloom_filter(options.bloom)
+out_dir = options.out_dir or 'graphs_dir'
+if not os.path.exists(out_dir):
+    os.makedirs(out_dir)
 
 try:
 	time_s = time.time()
@@ -79,6 +89,38 @@ if (api_chains_app == None):
 	sys.exit(0)
 time_getting_chains = time.time() - time_s
 
+# Generating cfg using pydot
+import pydot
+invokes, entry_points, mark = api_chains.get_graph_and_entry_points(andr_a, andr_d)
+graph = pydot.Dot(graph_type='digraph', rankdir='LR')
+added_nodes = {}
+for key in entry_points:
+	if not key in mark:
+		continue
+	node_key = pydot.Node(str(key), style="filled", fillcolor="green")
+	graph.add_node(node_key)
+	added_nodes[key] = node_key
+
+for key in mark.keys():
+	if not key in added_nodes:
+		node_key = pydot.Node(str(key))
+		graph.add_node(node_key)
+		added_nodes[key] = node_key
+	else:
+		node_key = added_nodes[key]
+
+	if not key in invokes:
+		continue
+
+	for to_key in invokes[key]:
+		if not to_key in added_nodes:
+			node_to_key = pydot.Node(str(to_key))
+			graph.add_node(node_to_key)
+			added_nodes[to_key] = node_to_key
+		else:
+			node_to_key = added_nodes[to_key]
+		graph.add_edge(pydot.Edge(node_key, node_to_key))
+graph.write_png(out_dir + '/cfg.png')
 
 api_chains_app_dict = {}
 for api_chain in api_chains_app:

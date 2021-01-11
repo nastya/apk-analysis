@@ -342,6 +342,24 @@ def get_api_chains(andr_a, andr_d):
 		api_chains1.append(added_chain)
 	return api_chains1
 
+def get_graph_and_entry_points(andr_a, andr_d):
+	global time_entry_points
+	libs_by_filter = None
+	if bloom_f:
+		libs_by_filter = detectLibPackages.detect_lib_packages_v2(andr_d)
+	entry_points1 = []
+	invokes1 = {}
+	mark1 = {}
+	entry_points_discovery_module.find_entry_points(andr_a, andr_d, framework_api, entry_points1, invokes1)
+	entry_points = []
+	for method in entry_points1:
+		root = method.get_class_name() + "->" + method.get_name() + method.get_descriptor()
+		entry_points.append(root)
+		mark_before = copy.deepcopy(mark1)
+		api_chain = []
+		dfs(root, invokes1, mark1, api_chain, True, libs_by_filter) #traversing library calls
+	return invokes1, entry_points, mark1
+
 def chains_unique(api_chains1, api_chains2, common_chains = None):
 	if len(api_chains1) != len(api_chains2):
 		return False
