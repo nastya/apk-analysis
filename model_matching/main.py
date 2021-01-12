@@ -21,6 +21,7 @@ import thresholds
 samples_dir = "../../drebin_samples"
 import os, fnmatch
 import time
+import uuid
 
 def find(pattern, path):
 	result = []
@@ -48,7 +49,7 @@ if options.bloom:
 	detectLibPackages.set_bloom_filter(options.bloom)
 out_dir = options.out_dir or 'graphs_dir'
 if not os.path.exists(out_dir):
-    os.makedirs(out_dir)
+	os.makedirs(out_dir)
 
 try:
 	time_s = time.time()
@@ -122,6 +123,36 @@ for key in mark.keys():
 		graph.add_edge(pydot.Edge(node_key, node_to_key))
 graph.write_png(out_dir + '/cfg.png')
 
+def gen_chain_png(chain_analyzed, chain_malware, common_chain, filename):
+	graph = pydot.Dot(graph_type='digraph')
+	prev_node = None
+	c_chain = common_chain.chain[:]
+	for item in chain_analyzed:
+		uid = uuid.uuid4()
+		if item in c_chain:
+			node = pydot.Node(str(uid), label=str(item), style="filled", fillcolor="grey", color='black')
+			c_chain.remove(item)
+		else:
+			node = pydot.Node(str(uid), label=str(item), color='black')
+		graph.add_node(node)
+		if prev_node:
+			graph.add_edge(pydot.Edge(prev_node, node))
+		prev_node = node
+	prev_node = None
+	c_chain = common_chain.chain[:]
+	for item in chain_malware:
+		uid = uuid.uuid4()
+		if item in c_chain:
+			node = pydot.Node(str(uid), label=str(item), style="filled", fillcolor="grey", color='red')
+			c_chain.remove(item)
+		else:
+			node = pydot.Node(str(uid), label=str(item), color='red')
+		graph.add_node(node)
+		if prev_node:
+			graph.add_edge(pydot.Edge(prev_node, node))
+		prev_node = node
+	graph.write_png(filename)
+
 api_chains_app_dict = {}
 for api_chain in api_chains_app:
 	api_chains_app_dict[api_chain.root] = api_chain.chain
@@ -163,6 +194,8 @@ for sample in similar_api_list:
 					common_chains[i].chain[j] = '*******************************************' + common_chains[i].chain[j]
 
 		for i in range(0, len(common_chains)):
+			gen_chain_png(api_chains_app_dict[common_chains[i].root], api_chains_sample_dict[common_chains[i].root2],
+						common_chains[i], out_dir + '/chains_' + str(i) + '.png')
 			print 'Root1:', common_chains[i].root, 'len:', len(api_chains_app_dict[common_chains[i].root])
 			print api_chains_app_dict[common_chains[i].root]
 			print 'Root2:', common_chains[i].root2, 'len:', len(api_chains_sample_dict[common_chains[i].root2])
