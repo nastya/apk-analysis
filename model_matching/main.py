@@ -160,6 +160,8 @@ for api_chain in api_chains_app:
 is_malicious = False
 
 time_s = time.time()
+matched_sample = ""  # matching malware sample for which we build png chains
+all_matched = []
 for sample in similar_api_list:
 	if (not sample in api_chain_matching.api_chain_model.malw_api_chain_models):
 		continue
@@ -181,11 +183,17 @@ for sample in similar_api_list:
 		(d >= 1 and b >= thresholds.api_chains_total_common_length) or \
 		(mal_a != 0 and mal_b != 0 and a * 1.0 / mal_a >= thresholds.api_chains_identical_num_chains and b * 1.0 / mal_b >= thresholds.api_chains_identical_len_chains):
 			flag_similar = True
+			if matched_sample == "":
+				matched_sample = sample
 	else:
 		common_chains = []
 		if api_chains.chains_unique(api_chains_app, api_chains_sample_list, common_chains):
 			flag_similar = True
+			if matched_sample == "":
+				matched_sample = sample
+
 	if flag_similar:
+		all_matched.append(sample)
 		print 'Common API chains with', sample
 		is_malicious = True
 		for i in range(0, len(common_chains)):
@@ -194,7 +202,8 @@ for sample in similar_api_list:
 					common_chains[i].chain[j] = '*******************************************' + common_chains[i].chain[j]
 
 		for i in range(0, len(common_chains)):
-			gen_chain_png(api_chains_app_dict[common_chains[i].root], api_chains_sample_dict[common_chains[i].root2],
+			if sample == matched_sample:
+				gen_chain_png(api_chains_app_dict[common_chains[i].root], api_chains_sample_dict[common_chains[i].root2],
 						common_chains[i], out_dir + '/chains_' + str(i) + '.png')
 			print 'Root1:', common_chains[i].root, 'len:', len(api_chains_app_dict[common_chains[i].root])
 			print api_chains_app_dict[common_chains[i].root]
@@ -216,5 +225,23 @@ print 'Time to compare chains:', time_compare
 print 'Time spent in lcs:', api_chains.time_spent_in_lcs
 print 'Time on finding entry points:', api_chains.time_entry_points
 
+f = open(out_dir + '/verdict.txt', 'w')
 if is_malicious:
+	f.write('malware')
 	print 'Identified as malware'
+else:
+	f.write('benign')
+f.close()
+if all_matched != []:
+	f = open(out_dir + '/similar_samples.txt', 'w')
+	f.write('\n'.join(all_matched))
+	f.close()
+	f = open(out_dir + '/malware_sample_to_match.txt', 'w')
+	f.write(matched_sample)
+	f.close()
+	f = open(out_dir + '/matched_permissions.txt', 'w')
+	f.write('\n'.join(permission_matching.get_matched(perms, matched_sample)))
+	f.close()
+	f = open(out_dir + '/matched_api.txt', 'w')
+	f.write('\n'.join(api_matching.get_matched_api(api, matched_sample)))
+	f.close()
